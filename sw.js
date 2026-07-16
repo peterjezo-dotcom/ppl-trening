@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ppl-trening-v1';
+const CACHE_NAME = 'ppl-trening-v2';
 const FILES_TO_CACHE = [
   './index.html',
   './manifest.json',
@@ -22,15 +22,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Network-first: vždy skús najprv stiahnuť najnovšiu verziu z internetu.
+// Cache sa použije len vtedy, keď je telefón offline (napr. v posilkárni bez signálu).
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, response.clone());
-          return response;
-        });
-      }).catch(() => cached);
-    })
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
