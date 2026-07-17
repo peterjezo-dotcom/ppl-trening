@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ppl-trening-v5';
+const CACHE_NAME = 'ppl-trening-v7';
 const FILES_TO_CACHE = [
   './index.html',
   './manifest.json',

@@ -146,6 +146,11 @@
   .exercise.open .chevron{transform:rotate(90deg);}
   .ex-body{display:none;padding:0 14px 14px;}
   .exercise.open .ex-body{display:block;}
+  .video-link{
+    display:inline-block;color:var(--accent);font-size:12px;font-weight:700;
+    text-decoration:none;margin-bottom:10px;border:1px solid var(--accent-dim);
+    border-radius:8px;padding:6px 10px;
+  }
   .set-row{
     display:flex;align-items:center;gap:8px;
     padding:7px 0;border-top:1px solid var(--line);
@@ -272,7 +277,7 @@ const DAYS = [
     {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75},
     {name:'Triceps na kladke — rope (Triceps Rope Pushdown)', sets:3, target:'8-12', rest:75},
     {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150},
-    {name:'Cable crunch', sets:3, target:'12-15', rest:60},
+    {name:'Reverse Crunch (kalistenika)', sets:3, target:'15-20', rest:60},
     {name:'Plank', sets:3, target:'30-45s', duration:true, rest:60},
   ]},
   {id:'tue', label:'Ut', full:'Utorok', type:'Pull + Core', rest:false, exercises:[
@@ -291,9 +296,9 @@ const DAYS = [
     {name:'Hip thrust', sets:3, target:'8-12', rest:150},
     {name:'Leg curl', sets:3, target:'8-12', rest:75},
     {name:'Leg extension — ľahšie (Leg Extension)', sets:3, target:'12-15', rest:75},
-    {name:'Adduktorový stroj (Hip Adductor Machine)', sets:3, target:'8-12', rest:75},
+    {name:'Side-Lying Adduction (kalistenika, šetrné ku kolenu)', sets:3, target:'12-20/str', rest:60},
     {name:'Výpony na lýtka (Calf Raise)', sets:3, target:'8-12', rest:75},
-    {name:'Cable woodchop / deadbug', sets:3, target:'10-12/str', rest:60},
+    {name:'Bird Dog (kalistenika, anti-rotácia)', sets:3, target:'10-12/str', rest:60},
   ]},
   {id:'thu', label:'Št', full:'Štvrtok', type:'Rest', rest:true, steps:8000},
   {id:'fri', label:'Pi', full:'Piatok', type:'Push #2 + Core', rest:false, exercises:[
@@ -312,6 +317,7 @@ const DAYS = [
     {name:'Sťahovanie kladky širokým úchopom (Wide-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150},
     {name:'Rozťahy na zadné delty (Rear Delt Fly)', sets:3, target:'8-12', rest:75},
     {name:'Hanging leg raise', sets:3, target:'10-15', rest:60},
+    {name:'Side Plank (kalistenika)', sets:3, target:'30-45s/str', rest:60, duration:true},
   ]},
   {id:'sun', label:'Ne', full:'Nedeľa', type:'Rest', rest:true, steps:8000},
 ];
@@ -373,6 +379,14 @@ function lastPerformance(exerciseName){
     }
   }
   return null;
+}
+
+function videoSearchQuery(name){
+  // Použi anglický názov v zátvorke, ak existuje, inak celý názov (bez slovenských doplnkov za pomlčkou).
+  const match = name.match(/\(([^)]+)\)/);
+  let q = match ? match[1] : name.split(' — ')[0].split(' / ')[0];
+  q = q.replace(/kalistenika,?\s*/gi, '').trim();
+  return encodeURIComponent(q + ' exercise proper form tutorial');
 }
 
 function getDraft(dayId){
@@ -612,7 +626,8 @@ function render(){
           </div>
           <div class="chevron">▶</div>
         </div>
-        <div class="ex-body">`;
+        <div class="ex-body">
+          <a href="https://www.youtube.com/results?search_query=${videoSearchQuery(ex.name)}" target="_blank" rel="noopener" class="video-link" onclick="event.stopPropagation()">▶ Video návod</a>`;
       for(let i=0;i<ex.sets;i++){
         const row = draft[i] || {};
         if(ex.duration){
