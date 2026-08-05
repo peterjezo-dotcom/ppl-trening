@@ -82,6 +82,49 @@
     background:var(--surface);border:1px solid var(--line);color:var(--text);
     font-size:16px;border-radius:8px;padding:5px 10px;cursor:pointer;
   }
+  .stats-panel{
+    left:0;right:auto;border-left:none;border-right:1px solid var(--line);
+    transform:translateX(-100%);
+  }
+  .stats-panel.open{transform:translateX(0);}
+  .toast{
+    position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);
+    background:var(--accent);color:#1B1918;font-weight:800;font-size:13px;
+    padding:10px 18px;border-radius:30px;z-index:300;opacity:0;
+    transition:opacity .25s, transform .25s;pointer-events:none;
+    white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .stat-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .stat-tab{
+    flex:1 1 auto;padding:8px 6px;border-radius:9px;background:var(--surface);
+    border:1px solid var(--line);color:var(--text-dim);font-size:11px;font-weight:700;
+    text-align:center;cursor:pointer;text-transform:uppercase;letter-spacing:0.02em;
+  }
+  .stat-tab.active{background:var(--accent);border-color:var(--accent);color:#1B1918;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin-bottom:12px;
+  }
+  .stat-card-title{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;font-weight:700;}
+  .stat-big{font-family:"SFMono-Regular",Consolas,monospace;font-size:26px;font-weight:800;color:var(--accent);}
+  .stat-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .muscle-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;}
+  .muscle-bar-label{width:78px;flex:0 0 auto;color:var(--text-dim);}
+  .muscle-bar-track{flex:1;height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden;}
+  .muscle-bar-fill{height:100%;background:var(--accent);border-radius:5px;}
+  .muscle-bar-val{width:26px;flex:0 0 auto;text-align:right;font-family:"SFMono-Regular",Consolas,monospace;color:var(--text-dim);}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .heatmap-cell{aspect-ratio:1;border-radius:3px;background:var(--surface-2);}
+  .heatmap-cell.trained{background:var(--accent);}
+  .heatmap-cell.active-only{background:var(--good);}
+  .ex-select{
+    width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px;
+  }
+  .pr-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-top:1px solid var(--line);}
+  .pr-row:first-child{border-top:none;}
   .deload-banner{
     background:linear-gradient(90deg,var(--warn),#8A2A22);
     color:#F5E9E6;
@@ -276,6 +319,8 @@
 <div class="app" id="app">Načítavam...</div>
 <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 <div class="menu-panel" id="menuPanel"></div>
+<div class="menu-overlay" id="statsOverlay" onclick="toggleStats()"></div>
+<div class="menu-panel stats-panel" id="statsPanel"></div>
 <div class="timer-bar" id="timerBar">
   <div class="timer-ring">
     <svg viewBox="0 0 52 52">
@@ -298,53 +343,53 @@
 <script>
 const DAYS = [
   {id:'mon', label:'Po', full:'Pondelok', type:'Push + Core', rest:false, exercises:[
-    {name:'Bench Press', sets:3, target:'8-12', rest:150},
-    {name:'Incline DB Press 30° (Incline Dumbbell Press)', sets:3, target:'8-12', rest:150},
-    {name:'Pec Deck / Cable Fly', sets:3, target:'8-12', rest:75},
-    {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75},
-    {name:'Triceps na kladke — rope (Triceps Rope Pushdown)', sets:3, target:'8-12', rest:75},
-    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150},
-    {name:'Reverse Crunch (kalistenika)', sets:3, target:'15-20', rest:60},
-    {name:'Plank', sets:3, target:'30-45s', duration:true, rest:60},
+    {name:'Bench Press', sets:3, target:'8-12', rest:150, muscle:'chest'},
+    {name:'Incline DB Press 30° (Incline Dumbbell Press)', sets:3, target:'8-12', rest:150, muscle:'chest'},
+    {name:'Pec Deck / Cable Fly', sets:3, target:'8-12', rest:75, muscle:'chest'},
+    {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
+    {name:'Triceps na kladke — rope (Triceps Rope Pushdown)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150, muscle:'chest'},
+    {name:'Reverse Crunch (kalistenika)', sets:3, target:'15-20', rest:60, muscle:'core'},
+    {name:'Plank', sets:3, target:'30-45s', duration:true, rest:60, muscle:'core'},
   ]},
   {id:'tue', label:'Ut', full:'Utorok', type:'Pull + Core', rest:false, exercises:[
-    {name:'Zhyby / sťahovanie kladky (Pull-Ups / Lat Pulldown)', sets:3, target:'8-12', rest:150},
-    {name:'Sťahovanie kladky neutrál (Neutral-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150},
-    {name:'Chest-supported row', sets:3, target:'8-12', rest:150},
-    {name:'Sedavé veslovanie (Seated Cable Row)', sets:3, target:'8-12', rest:150},
-    {name:'Zdvíhanie obojručky (Barbell Curl)', sets:3, target:'8-12', rest:75},
-    {name:'Zdvíhanie na šikmej lavičke (Incline Dumbbell Curl)', sets:3, target:'8-12', rest:75},
-    {name:'Hanging knee raise', sets:3, target:'10-15', rest:60},
-    {name:'Pallof press', sets:3, target:'10-12/str', rest:60},
+    {name:'Zhyby / sťahovanie kladky (Pull-Ups / Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Sťahovanie kladky neutrál (Neutral-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Chest-supported row', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Sedavé veslovanie (Seated Cable Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Zdvíhanie obojručky (Barbell Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Zdvíhanie na šikmej lavičke (Incline Dumbbell Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Hanging knee raise', sets:3, target:'10-15', rest:60, muscle:'core'},
+    {name:'Pallof press', sets:3, target:'10-12/str', rest:60, muscle:'core'},
   ]},
   {id:'wed', label:'St', full:'Streda', type:'Legs (koleno) + Core', rest:false, exercises:[
-    {name:'Rumunský mŕtvy ťah — RDL (Romanian Deadlift)', sets:3, target:'8-12', rest:150},
-    {name:'Leg press', sets:3, target:'8-12', rest:150},
-    {name:'Hip thrust', sets:3, target:'8-12', rest:150},
-    {name:'Leg curl', sets:3, target:'8-12', rest:75},
-    {name:'Leg extension — ľahšie (Leg Extension)', sets:3, target:'12-15', rest:75},
-    {name:'Side-Lying Adduction (kalistenika, šetrné ku kolenu)', sets:3, target:'12-20/str', rest:60},
-    {name:'Výpony na lýtka (Calf Raise)', sets:3, target:'8-12', rest:75},
-    {name:'Bird Dog (kalistenika, anti-rotácia)', sets:3, target:'10-12/str', rest:60},
+    {name:'Rumunský mŕtvy ťah — RDL (Romanian Deadlift)', sets:3, target:'8-12', rest:150, muscle:'legs'},
+    {name:'Leg press', sets:3, target:'8-12', rest:150, muscle:'legs'},
+    {name:'Hip thrust', sets:3, target:'8-12', rest:150, muscle:'legs'},
+    {name:'Leg curl', sets:3, target:'8-12', rest:75, muscle:'legs'},
+    {name:'Leg extension — ľahšie (Leg Extension)', sets:3, target:'12-15', rest:75, muscle:'legs'},
+    {name:'Side-Lying Adduction (kalistenika, šetrné ku kolenu)', sets:3, target:'12-20/str', rest:60, muscle:'legs'},
+    {name:'Výpony na lýtka (Calf Raise)', sets:3, target:'8-12', rest:75, muscle:'legs'},
+    {name:'Bird Dog (kalistenika, anti-rotácia)', sets:3, target:'10-12/str', rest:60, muscle:'core'},
   ]},
   {id:'thu', label:'Št', full:'Štvrtok', type:'Rest', rest:true, steps:8000},
   {id:'fri', label:'Pi', full:'Piatok', type:'Push #2 + Core', rest:false, exercises:[
-    {name:'Shoulder Press — jednoručky (Dumbbell Shoulder Press)', sets:3, target:'8-12', rest:150},
-    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150},
-    {name:'Skullcrusher (EZ-Bar Skullcrusher)', sets:3, target:'8-12', rest:75},
-    {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75},
-    {name:'Zdvíhanie s EZ osou (EZ-Bar Curl)', sets:3, target:'8-12', rest:75},
-    {name:'Zdvíhanie na kladke (Cable Curl)', sets:3, target:'8-12', rest:75},
-    {name:'Ab wheel / cable crunch', sets:3, target:'10-15', rest:60},
+    {name:'Shoulder Press — jednoručky (Dumbbell Shoulder Press)', sets:3, target:'8-12', rest:150, muscle:'shoulders'},
+    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150, muscle:'chest'},
+    {name:'Skullcrusher (EZ-Bar Skullcrusher)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
+    {name:'Zdvíhanie s EZ osou (EZ-Bar Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Zdvíhanie na kladke (Cable Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Ab wheel / cable crunch', sets:3, target:'10-15', rest:60, muscle:'core'},
   ]},
   {id:'sat', label:'So', full:'Sobota', type:'Pull #2 + Core', rest:false, exercises:[
-    {name:'Leg press / Hip thrust', sets:3, target:'8-12', rest:150},
-    {name:'Veslovanie s oporou hrudníka (Chest-Supported Row)', sets:3, target:'8-12', rest:150},
-    {name:'Jednoručné veslovanie na kladke (Single-Arm Cable Row)', sets:3, target:'8-12', rest:150},
-    {name:'Sťahovanie kladky širokým úchopom (Wide-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150},
-    {name:'Rozťahy na zadné delty (Rear Delt Fly)', sets:3, target:'8-12', rest:75},
-    {name:'Hanging leg raise', sets:3, target:'10-15', rest:60},
-    {name:'Side Plank (kalistenika)', sets:3, target:'30-45s/str', rest:60, duration:true},
+    {name:'Leg press / Hip thrust', sets:3, target:'8-12', rest:150, muscle:'legs'},
+    {name:'Veslovanie s oporou hrudníka (Chest-Supported Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Jednoručné veslovanie na kladke (Single-Arm Cable Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Sťahovanie kladky širokým úchopom (Wide-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Rozťahy na zadné delty (Rear Delt Fly)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
+    {name:'Hanging leg raise', sets:3, target:'10-15', rest:60, muscle:'core'},
+    {name:'Side Plank (kalistenika)', sets:3, target:'30-45s/str', rest:60, duration:true, muscle:'core'},
   ]},
   {id:'sun', label:'Ne', full:'Nedeľa', type:'Rest', rest:true, steps:8000},
 ];
@@ -408,6 +453,196 @@ function lastPerformance(exerciseName){
   return null;
 }
 
+// ==================== ŠTATISTIKY ====================
+
+const MUSCLE_LABELS = {chest:'Hrudník', back:'Chrbát', legs:'Nohy', shoulders:'Plecia', arms:'Ruky', core:'Core/brucho'};
+
+function e1RM(weight, reps){
+  const w = Number(weight), r = Number(reps);
+  if(!w || !r) return 0;
+  return Math.round(w * (1 + r/30) * 10) / 10;
+}
+
+// Vráti zoradené záznamy (dátum, najlepší set toho dňa podľa e1RM) pre daný cvik naprieč celou históriou.
+function exerciseHistory(exerciseName){
+  const out = [];
+  for(const s of state.sessions){
+    if(s.entries && s.entries[exerciseName]){
+      const rows = s.entries[exerciseName].filter(r=>r && (r.weight||r.reps||r.duration));
+      if(!rows.length) continue;
+      let best = rows[0];
+      let bestScore = e1RM(best.weight, best.reps) || (best.duration||0);
+      for(const r of rows){
+        const score = e1RM(r.weight, r.reps) || (r.duration||0);
+        if(score > bestScore){ best = r; bestScore = score; }
+      }
+      out.push({date:s.date, weight:best.weight, reps:best.reps, duration:best.duration, e1rm:e1RM(best.weight,best.reps)});
+    }
+  }
+  return out.sort((a,b)=> a.date.localeCompare(b.date));
+}
+
+// Zoznam všetkých cvikov, ktoré sa niekedy zapísali (na výber v dropdowne).
+function allLoggedExerciseNames(){
+  const set = new Set();
+  for(const s of state.sessions){
+    if(s.entries) Object.keys(s.entries).forEach(n=>set.add(n));
+  }
+  return Array.from(set).sort();
+}
+
+// Je tento konkrétny set nový osobný rekord? (porovnáva e1RM voči histórii PRED týmto zápisom)
+function checkIsPR(exerciseName, weight, reps){
+  const w = Number(weight), r = Number(reps);
+  if(!w || !r) return false;
+  const score = e1RM(w, r);
+  const hist = exerciseHistory(exerciseName);
+  const maxPrev = hist.reduce((m,h)=>Math.max(m, h.e1rm||0), 0);
+  return score > maxPrev && maxPrev > 0;
+}
+
+function showToast(msg){
+  let el = document.getElementById('toastMsg');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'toastMsg';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+// Objem (počet sérií) podľa svalovej skupiny za posledných `days` dní.
+function volumeByMuscle(days){
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const totals = {};
+  for(const key in MUSCLE_LABELS) totals[key] = 0;
+  const exByName = {};
+  DAYS.forEach(d=>{ if(!d.rest) d.exercises.forEach(ex=>{ exByName[ex.name] = ex; }); });
+  for(const s of state.sessions){
+    if(s.rest || !s.entries || s.date < cutoffStr) continue;
+    for(const exName in s.entries){
+      const ex = exByName[exName];
+      const muscle = ex ? ex.muscle : null;
+      if(!muscle) continue;
+      const validSets = s.entries[exName].filter(r=>r && (r.weight||r.reps||r.duration));
+      totals[muscle] += validSets.length;
+    }
+  }
+  return totals;
+}
+
+// Dáta pre kalendárovú heatmapu za posledných `weeks` týždňov.
+function heatmapData(weeks){
+  const days = weeks*7;
+  const today = new Date();
+  const trainedDates = new Set(state.sessions.filter(s=>!s.rest).map(s=>s.date));
+  const activeDates = new Set(state.sessions.map(s=>s.date));
+  const out = [];
+  for(let i=days-1; i>=0; i--){
+    const d = new Date(today);
+    d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    out.push({date:key, trained:trainedDates.has(key), active:activeDates.has(key)});
+  }
+  return out;
+}
+
+// Aktuálna séria po sebe idúcich dní s aspoň jedným záznamom (tréning alebo kroky).
+function currentStreak(){
+  const activeDates = new Set(state.sessions.map(s=>s.date));
+  let streak = 0;
+  const d = new Date();
+  while(true){
+    const key = d.toISOString().slice(0,10);
+    if(activeDates.has(key)){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function totalsSummary(){
+  let totalWorkouts = 0, totalVolume = 0, totalSets = 0, durSum = 0, durCount = 0;
+  for(const s of state.sessions){
+    if(s.rest) continue;
+    totalWorkouts++;
+    if(s.durationMin){ durSum += s.durationMin; durCount++; }
+    if(!s.entries) continue;
+    for(const exName in s.entries){
+      for(const r of s.entries[exName]){
+        if(!r) continue;
+        if(r.weight && r.reps){ totalVolume += Number(r.weight)*Number(r.reps); totalSets++; }
+        else if(r.reps || r.duration){ totalSets++; }
+      }
+    }
+  }
+  return {
+    totalWorkouts, totalSets,
+    totalVolume: Math.round(totalVolume),
+    avgDuration: durCount ? Math.round(durSum/durCount) : null,
+  };
+}
+
+function exportCSV(){
+  const rows = [['Dátum','Deň','Cvik','Séria','Váha (kg)','Opakovania','Sekundy']];
+  for(const s of state.sessions){
+    if(s.rest){
+      rows.push([s.date, s.dayLabel, 'Kroky', '', '', '', s.steps||'']);
+      continue;
+    }
+    if(!s.entries) continue;
+    for(const exName in s.entries){
+      s.entries[exName].forEach((r,i)=>{
+        if(!r) return;
+        rows.push([s.date, s.dayLabel, exName, i+1, r.weight||'', r.reps||'', r.duration||'']);
+      });
+    }
+  }
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ppl-trening-export-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Jednoduchý inline SVG čiarový graf, bez závislosti na externej knižnici.
+function svgLineChart(points, opts){
+  opts = opts || {};
+  const w = opts.width || 320, h = opts.height || 120, pad = 24;
+  if(points.length === 0) return `<div class="empty">Zatiaľ nemáš dosť dát pre graf.</div>`;
+  if(points.length === 1){
+    return `<div class="empty">Potrebuješ aspoň 2 záznamy pre graf trendu (zatiaľ máš 1).</div>`;
+  }
+  const values = points.map(p=>p.v);
+  const minV = Math.min(...values), maxV = Math.max(...values);
+  const range = (maxV - minV) || 1;
+  const stepX = (w - pad*2) / (points.length-1);
+  const coords = points.map((p,i)=>{
+    const x = pad + i*stepX;
+    const y = h - pad - ((p.v - minV)/range) * (h - pad*2);
+    return [x,y];
+  });
+  const path = coords.map((c,i)=> (i===0?'M':'L') + c[0].toFixed(1) + ',' + c[1].toFixed(1)).join(' ');
+  const dots = coords.map((c,i)=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.5" fill="var(--accent)"><title>${points[i].label}: ${points[i].v}</title></circle>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px;">
+    <polyline points="${coords.map(c=>c[0].toFixed(1)+','+c[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    ${dots}
+  </svg>
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);font-family:'SFMono-Regular',Consolas,monospace;">
+    <span>${points[0].label}</span><span>${points[points.length-1].label}</span>
+  </div>`;
+}
+
 function videoSearchQuery(name){
   // Použi anglický názov v zátvorke, ak existuje, inak celý názov (bez slovenských doplnkov za pomlčkou).
   const match = name.match(/\(([^)]+)\)/);
@@ -421,7 +656,10 @@ function getDraft(dayId){
   return state.draft[dayId];
 }
 
+let sessionStartTimes = {};
+
 function setDraftValue(dayId, exName, setIdx, field, value, restSeconds){
+  if(!sessionStartTimes[dayId]) sessionStartTimes[dayId] = Date.now();
   const d = getDraft(dayId);
   if(!d[exName]) d[exName] = [];
   if(!d[exName][setIdx]) d[exName][setIdx] = {};
@@ -429,23 +667,67 @@ function setDraftValue(dayId, exName, setIdx, field, value, restSeconds){
   if((field === 'reps' || field === 'duration') && value && restSeconds){
     startRestTimer(restSeconds, exName);
   }
+  if(field === 'reps' && value){
+    const row = d[exName][setIdx];
+    if(row.weight && checkIsPR(exName, row.weight, row.reps)){
+      showToast('🏆 Nový osobný rekord — ' + exName.split(' (')[0].split(' —')[0] + '!');
+    }
+  }
 }
 
 // ---- Odpočinkový časovač ----
 let timerState = {interval:null, remaining:0, total:0, paused:false};
 const TIMER_CIRCUMFERENCE = 138.2;
+const REST_NOTIF_ID = 90001;
+
+function isNativeApp(){
+  try{ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
+  catch(e){ return false; }
+}
+
+async function requestNotifPermission(){
+  if(!isNativeApp()) return;
+  try{
+    const LN = window.Capacitor.Plugins.LocalNotifications;
+    await LN.requestPermissions();
+  }catch(e){}
+}
+
+async function scheduleNativeRestNotification(seconds, label){
+  if(!isNativeApp()) return;
+  try{
+    const LN = window.Capacitor.Plugins.LocalNotifications;
+    await LN.cancel({notifications:[{id:REST_NOTIF_ID}]});
+    await LN.schedule({notifications:[{
+      id: REST_NOTIF_ID,
+      title: '💪 Koniec odpočinku',
+      body: label + ' — čas na ďalší set',
+      schedule: {at: new Date(Date.now() + seconds*1000), allowWhileIdle:true},
+    }]});
+  }catch(e){}
+}
+
+async function cancelNativeRestNotification(){
+  if(!isNativeApp()) return;
+  try{
+    const LN = window.Capacitor.Plugins.LocalNotifications;
+    await LN.cancel({notifications:[{id:REST_NOTIF_ID}]});
+  }catch(e){}
+}
 
 function startRestTimer(seconds, label){
   clearInterval(timerState.interval);
   timerState.remaining = seconds;
   timerState.total = seconds;
   timerState.paused = false;
+  const shortLabel = label.split(' (')[0].split(' —')[0];
   document.getElementById('timerBar').classList.add('active');
-  document.getElementById('timerLabel').textContent = 'Odpočinok — ' + label.split(' (')[0].split(' —')[0];
+  document.getElementById('timerLabel').textContent = 'Odpočinok — ' + shortLabel;
   document.getElementById('timerPauseBtn').textContent = '⏸';
   updateTimerDisplay();
   timerState.interval = setInterval(timerTick, 1000);
   try{ navigator.vibrate && navigator.vibrate(40); }catch(e){}
+  scheduleNativeRestNotification(seconds, shortLabel);
 }
 
 function timerTick(){
@@ -456,6 +738,7 @@ function timerTick(){
     clearInterval(timerState.interval);
     try{ navigator.vibrate && navigator.vibrate([200,100,200,100,300]); }catch(e){}
     playBeep();
+    cancelNativeRestNotification();
     setTimeout(()=>{ document.getElementById('timerBar').classList.remove('active'); }, 1500);
     return;
   }
@@ -475,17 +758,28 @@ function updateTimerDisplay(){
 function timerPauseResume(){
   timerState.paused = !timerState.paused;
   document.getElementById('timerPauseBtn').textContent = timerState.paused ? '▶' : '⏸';
+  if(timerState.paused){
+    cancelNativeRestNotification();
+  } else {
+    const label = document.getElementById('timerLabel').textContent.replace('Odpočinok — ', '');
+    scheduleNativeRestNotification(timerState.remaining, label);
+  }
 }
 
 function timerAddTime(sec){
   timerState.remaining += sec;
   timerState.total += sec;
   updateTimerDisplay();
+  if(!timerState.paused){
+    const label = document.getElementById('timerLabel').textContent.replace('Odpočinok — ', '');
+    scheduleNativeRestNotification(timerState.remaining, label);
+  }
 }
 
 function timerSkip(){
   clearInterval(timerState.interval);
   document.getElementById('timerBar').classList.remove('active');
+  cancelNativeRestNotification();
 }
 
 function playBeep(){
@@ -513,12 +807,15 @@ async function finishWorkout(day){
     alert('Zapíš aspoň jeden set predtým, než tréning uložíš.');
     return;
   }
+  const startTime = sessionStartTimes[day.id];
+  const durationMin = startTime ? Math.max(1, Math.round((Date.now()-startTime)/60000)) : null;
   const session = {
     id: Date.now(),
     date: new Date().toISOString().slice(0,10),
     dayId: day.id,
     dayLabel: day.full,
     entries,
+    durationMin,
   };
   state.sessions.push(session);
   try{
@@ -527,6 +824,7 @@ async function finishWorkout(day){
     alert('Ukladanie zlyhalo, skús to znova.');
     return;
   }
+  delete sessionStartTimes[day.id];
   state.draft[day.id] = {};
   const msg = document.getElementById('savedMsg');
   render();
@@ -570,6 +868,13 @@ function selectDay(id){
 }
 
 let menuOpen = false;
+let historyFilter = '';
+
+function selectHistoryFilter(name){
+  historyFilter = name;
+  renderMenuPanel();
+}
+
 function toggleMenu(){
   menuOpen = !menuOpen;
   document.getElementById('menuOverlay').classList.toggle('open', menuOpen);
@@ -577,16 +882,197 @@ function toggleMenu(){
   if(menuOpen) renderMenuPanel();
 }
 
+let statsOpen = false;
+let statsTab = 'exercises';
+let selectedStatExercise = null;
+
+function toggleStats(){
+  statsOpen = !statsOpen;
+  document.getElementById('statsOverlay').classList.toggle('open', statsOpen);
+  document.getElementById('statsPanel').classList.toggle('open', statsOpen);
+  if(statsOpen) renderStatsPanel();
+}
+
+function selectStatTab(tab){
+  statsTab = tab;
+  renderStatsPanel();
+}
+
+function selectStatExercise(name){
+  selectedStatExercise = name;
+  renderStatsPanel();
+}
+
+function renderStatsPanel(){
+  const tabs = [
+    {id:'exercises', label:'Cviky'},
+    {id:'volume', label:'Objem'},
+    {id:'consistency', label:'Séria'},
+    {id:'totals', label:'Celkovo'},
+  ];
+  let html = `<div class="menu-panel-head"><h2>Štatistiky</h2><button class="menu-close" onclick="toggleStats()">✕</button></div>`;
+  html += `<div class="stat-tabs">`;
+  for(const t of tabs){
+    html += `<div class="stat-tab ${statsTab===t.id?'active':''}" onclick="selectStatTab('${t.id}')">${t.label}</div>`;
+  }
+  html += `</div>`;
+
+  if(statsTab === 'exercises') html += renderStatExercisesTab();
+  else if(statsTab === 'volume') html += renderStatVolumeTab();
+  else if(statsTab === 'consistency') html += renderStatConsistencyTab();
+  else if(statsTab === 'totals') html += renderStatTotalsTab();
+
+  document.getElementById('statsPanel').innerHTML = html;
+}
+
+function renderStatExercisesTab(){
+  const names = allLoggedExerciseNames();
+  if(names.length === 0){
+    return `<div class="empty">Zatiaľ nemáš žiadne zapísané cviky. Odcvič a zapíš aspoň jeden tréning, aby sa tu objavili štatistiky.</div>`;
+  }
+  if(!selectedStatExercise || !names.includes(selectedStatExercise)) selectedStatExercise = names[0];
+  let html = `<select class="ex-select" onchange="selectStatExercise(this.value)">`;
+  for(const n of names){
+    const short = n.split(' (')[0].split(' —')[0];
+    html += `<option value="${n.replace(/"/g,'&quot;')}" ${n===selectedStatExercise?'selected':''}>${short}</option>`;
+  }
+  html += `</select>`;
+
+  const hist = exerciseHistory(selectedStatExercise);
+  const isDuration = hist.length && hist[0].duration !== undefined && hist[0].duration;
+  const points = hist.map(h=>({label:h.date.slice(5), v: isDuration ? (h.duration||0) : (h.e1rm||0)}));
+
+  html += `<div class="stat-card">
+    <div class="stat-card-title">${isDuration ? 'Trend — sekundy' : 'Trend — odhadovaný 1RM (kg)'}</div>
+    ${svgLineChart(points, {height:130})}
+  </div>`;
+
+  if(hist.length){
+    const last = hist[hist.length-1];
+    html += `<div class="stat-card">
+      <div class="stat-card-title">Posledný záznam (${last.date})</div>
+      <div class="stat-big">${isDuration ? (last.duration+'s') : (last.weight+'kg × '+last.reps)}</div>
+      ${!isDuration ? `<div class="stat-sub">odhad. 1RM: ${last.e1rm} kg</div>` : ''}
+    </div>`;
+
+    // top 3 najlepšie záznamy podľa e1RM/duration
+    const sorted = hist.slice().sort((a,b)=> (isDuration ? (b.duration-a.duration) : (b.e1rm-a.e1rm)));
+    html += `<div class="stat-card"><div class="stat-card-title">🏆 Top 3 osobné rekordy</div>`;
+    sorted.slice(0,3).forEach((h,i)=>{
+      html += `<div class="pr-row"><span>#${i+1} — ${h.date}</span><span>${isDuration ? (h.duration+'s') : (h.weight+'kg × '+h.reps+' ('+h.e1rm+'kg 1RM)')}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+function renderStatVolumeTab(){
+  const totals = volumeByMuscle(7);
+  const maxV = Math.max(1, ...Object.values(totals));
+  let html = `<div class="stat-card">
+    <div class="stat-card-title">Objem za posledných 7 dní (počet sérií)</div>`;
+  for(const key in MUSCLE_LABELS){
+    const v = totals[key] || 0;
+    const pct = Math.round((v/maxV)*100);
+    html += `<div class="muscle-bar-row">
+      <div class="muscle-bar-label">${MUSCLE_LABELS[key]}</div>
+      <div class="muscle-bar-track"><div class="muscle-bar-fill" style="width:${pct}%;"></div></div>
+      <div class="muscle-bar-val">${v}</div>
+    </div>`;
+  }
+  html += `<div class="stat-sub" style="margin-top:8px;">Odporúčaný rozsah je cca 10–20 sérií/svalová skupina/týždeň pre hypertrofiu.</div></div>`;
+
+  const totals28 = volumeByMuscle(28);
+  html += `<div class="stat-card">
+    <div class="stat-card-title">Objem za posledné 4 týždne (priemer/týždeň)</div>`;
+  for(const key in MUSCLE_LABELS){
+    const avg = Math.round((totals28[key]||0)/4*10)/10;
+    html += `<div class="pr-row"><span>${MUSCLE_LABELS[key]}</span><span>${avg} sérií/týž.</span></div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderStatConsistencyTab(){
+  const streak = currentStreak();
+  const data = heatmapData(10);
+  const last28 = data.slice(-28);
+  const trainedLast28 = last28.filter(d=>d.trained).length;
+  const adherencePct = Math.round((trainedLast28/20)*100);
+
+  let html = `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-card-title">Aktuálna séria</div><div class="stat-big">${streak}</div><div class="stat-sub">po sebe idúcich dní so záznamom</div></div>
+    <div class="stat-card"><div class="stat-card-title">Dodržanie plánu</div><div class="stat-big">${adherencePct}%</div><div class="stat-sub">za posledné 4 týždne (cieľ: 5 dní/týž.)</div></div>
+  </div>`;
+
+  html += `<div class="stat-card">
+    <div class="stat-card-title">Posledných 10 týždňov</div>
+    <div class="heatmap-grid">`;
+  for(const d of data){
+    const cls = d.trained ? 'trained' : (d.active ? 'active-only' : '');
+    html += `<div class="heatmap-cell ${cls}" title="${d.date}"></div>`;
+  }
+  html += `</div>
+    <div class="stat-sub" style="margin-top:8px;">🟧 tréning &nbsp; 🟩 len kroky &nbsp; ⬛ nič</div>
+  </div>`;
+  return html;
+}
+
+function renderStatTotalsTab(){
+  const t = totalsSummary();
+  let html = `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-card-title">Odcvičené tréningy</div><div class="stat-big">${t.totalWorkouts}</div></div>
+    <div class="stat-card"><div class="stat-card-title">Celkové série</div><div class="stat-big">${t.totalSets}</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Celková zdvihnutá váha (od začiatku)</div>
+    <div class="stat-big">${t.totalVolume.toLocaleString('sk-SK')} kg</div>
+    <div class="stat-sub">súčet váha × opakovania naprieč všetkými zápismi</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Priemerná dĺžka tréningu</div>
+    <div class="stat-big">${t.avgDuration ? t.avgDuration+' min' : '—'}</div>
+    <div class="stat-sub">${t.avgDuration ? '' : 'zatiaľ nemáš dosť dát (počíta sa len z tréningov odteraz)'}</div>
+  </div>
+  <div class="stat-card">
+    <button class="ghost" style="width:100%;" onclick="exportCSV()">⬇ Exportovať CSV (Excel/Sheets)</button>
+  </div>`;
+  return html;
+}
+
 function renderMenuPanel(){
-  const recentSessions = state.sessions.slice().reverse();
   let html = `<div class="menu-panel-head"><h2>História a nastavenia</h2><button class="menu-close" onclick="toggleMenu()">✕</button></div>`;
 
   html += `<div class="section-title">História</div>`;
-  if(recentSessions.length === 0){
-    html += `<div class="empty">Zatiaľ žiadne záznamy.</div>`;
+  const exNames = allLoggedExerciseNames();
+  html += `<select class="ex-select" onchange="selectHistoryFilter(this.value)">
+    <option value="">Zobraziť podľa dní (bez filtra)</option>`;
+  for(const n of exNames){
+    const short = n.split(' (')[0].split(' —')[0];
+    html += `<option value="${n.replace(/"/g,'&quot;')}" ${historyFilter===n?'selected':''}>${short}</option>`;
+  }
+  html += `</select>`;
+
+  if(historyFilter){
+    const hist = exerciseHistory(historyFilter).slice().reverse();
+    if(hist.length === 0){
+      html += `<div class="empty">Žiadne záznamy pre tento cvik.</div>`;
+    } else {
+      for(const h of hist){
+        const val = h.duration ? (h.duration+'s') : (h.weight+'kg × '+h.reps);
+        html += `<div class="history-item"><span>${val}</span><span class="h-date">${h.date}</span></div>`;
+      }
+    }
   } else {
-    for(const s of recentSessions){
-      html += `<div class="history-item"><span>${s.dayLabel}${s.rest ? ' — '+s.steps+' krokov' : ''}</span><span class="h-date">${s.date}</span></div>`;
+    const recentSessions = state.sessions.slice().reverse();
+    if(recentSessions.length === 0){
+      html += `<div class="empty">Zatiaľ žiadne záznamy.</div>`;
+    } else {
+      for(const s of recentSessions){
+        const durLabel = s.durationMin ? ' · '+s.durationMin+' min' : '';
+        html += `<div class="history-item"><span>${s.dayLabel}${s.rest ? ' — '+s.steps+' krokov' : durLabel}</span><span class="h-date">${s.date}</span></div>`;
+      }
     }
   }
 
@@ -660,7 +1146,7 @@ function render(){
   const week = currentWeek();
   const deload = isDeloadWeek();
 
-  let html = `<div class="brand"><h1>PPL <span>Tréning</span></h1><div style="display:flex;align-items:center;gap:8px;"><div class="week-badge">Týždeň ${week}</div><button class="menu-btn" onclick="toggleMenu()">☰</button></div></div>`;
+  let html = `<div class="brand"><h1>PPL <span>Tréning</span></h1><div style="display:flex;align-items:center;gap:8px;"><div class="week-badge">Týždeň ${week}</div><button class="menu-btn" onclick="toggleStats()">📊</button><button class="menu-btn" onclick="toggleMenu()">☰</button></div></div>`;
 
   if(deload){
     html += `<div class="deload-banner">🔻 DELOAD TÝŽDEŇ — znížiť váhu o 40-50 % a objem o polovicu. Budúci týždeň späť na plnú záťaž.</div>`;
@@ -728,6 +1214,7 @@ function render(){
 }
 
 loadData();
+requestNotifPermission();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
