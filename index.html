@@ -342,27 +342,28 @@
 
 <script>
 const DAYS = [
-  {id:'mon', label:'Po', full:'Pondelok', type:'Push + Core', rest:false, exercises:[
+  {id:'mon', label:'Po', full:'Pondelok', type:'Push', rest:false, exercises:[
     {name:'Bench Press', sets:3, target:'8-12', rest:150, muscle:'chest'},
+    {name:'Shoulder Press — jednoručky (Dumbbell Shoulder Press)', sets:3, target:'8-12', rest:150, muscle:'shoulders'},
     {name:'Incline DB Press 30° (Incline Dumbbell Press)', sets:3, target:'8-12', rest:150, muscle:'chest'},
-    {name:'Pec Deck / Cable Fly', sets:3, target:'8-12', rest:75, muscle:'chest'},
+    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150, muscle:'chest'},
     {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
     {name:'Triceps na kladke — rope (Triceps Rope Pushdown)', sets:3, target:'8-12', rest:75, muscle:'arms'},
-    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150, muscle:'chest'},
-    {name:'Reverse Crunch (kalistenika)', sets:3, target:'15-20', rest:60, muscle:'core'},
+    {name:'Skullcrusher (EZ-Bar Skullcrusher)', sets:3, target:'8-12', rest:75, muscle:'arms'},
     {name:'Plank', sets:3, target:'30-45s', duration:true, rest:60, muscle:'core'},
   ]},
-  {id:'tue', label:'Ut', full:'Utorok', type:'Pull + Core', rest:false, exercises:[
+  {id:'tue', label:'Ut', full:'Utorok', type:'Pull', rest:false, exercises:[
     {name:'Zhyby / sťahovanie kladky (Pull-Ups / Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
-    {name:'Sťahovanie kladky neutrál (Neutral-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Sťahovanie kladky širokým úchopom (Wide-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
     {name:'Chest-supported row', sets:3, target:'8-12', rest:150, muscle:'back'},
-    {name:'Sedavé veslovanie (Seated Cable Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Rozťahy na zadné delty (Rear Delt Fly)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
     {name:'Zdvíhanie obojručky (Barbell Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
     {name:'Zdvíhanie na šikmej lavičke (Incline Dumbbell Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
-    {name:'Hanging knee raise', sets:3, target:'10-15', rest:60, muscle:'core'},
     {name:'Pallof press', sets:3, target:'10-12/str', rest:60, muscle:'core'},
+    {name:'Hanging leg raise', sets:3, target:'10-15', rest:60, muscle:'core'},
   ]},
-  {id:'wed', label:'St', full:'Streda', type:'Legs (koleno) + Core', rest:false, exercises:[
+  {id:'wed', label:'St', full:'Streda', type:'Rest', rest:true, steps:8000},
+  {id:'thu', label:'Št', full:'Štvrtok', type:'Legs (koleno)', rest:false, exercises:[
     {name:'Rumunský mŕtvy ťah — RDL (Romanian Deadlift)', sets:3, target:'8-12', rest:150, muscle:'legs'},
     {name:'Leg press', sets:3, target:'8-12', rest:150, muscle:'legs'},
     {name:'Hip thrust', sets:3, target:'8-12', rest:150, muscle:'legs'},
@@ -372,25 +373,17 @@ const DAYS = [
     {name:'Výpony na lýtka (Calf Raise)', sets:3, target:'8-12', rest:75, muscle:'legs'},
     {name:'Bird Dog (kalistenika, anti-rotácia)', sets:3, target:'10-12/str', rest:60, muscle:'core'},
   ]},
-  {id:'thu', label:'Št', full:'Štvrtok', type:'Rest', rest:true, steps:8000},
-  {id:'fri', label:'Pi', full:'Piatok', type:'Push #2 + Core', rest:false, exercises:[
-    {name:'Shoulder Press — jednoručky (Dumbbell Shoulder Press)', sets:3, target:'8-12', rest:150, muscle:'shoulders'},
-    {name:'Dips na hrazde (Bar Dips)', sets:3, target:'8-12', rest:150, muscle:'chest'},
-    {name:'Skullcrusher (EZ-Bar Skullcrusher)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+  {id:'fri', label:'Pi', full:'Piatok', type:'Upper', rest:false, exercises:[
+    {name:'Pec Deck / Cable Fly', sets:3, target:'8-12', rest:75, muscle:'chest'},
+    {name:'Sťahovanie kladky neutrál (Neutral-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
+    {name:'Sedavé veslovanie (Seated Cable Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
     {name:'Bočné upažovanie (Lateral Raise)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
-    {name:'Zdvíhanie s EZ osou (EZ-Bar Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
     {name:'Zdvíhanie na kladke (Cable Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
+    {name:'Zdvíhanie s EZ osou (EZ-Bar Curl)', sets:3, target:'8-12', rest:75, muscle:'arms'},
     {name:'Ab wheel / cable crunch', sets:3, target:'10-15', rest:60, muscle:'core'},
-  ]},
-  {id:'sat', label:'So', full:'Sobota', type:'Pull #2 + Core', rest:false, exercises:[
-    {name:'Leg press / Hip thrust', sets:3, target:'8-12', rest:150, muscle:'legs'},
-    {name:'Veslovanie s oporou hrudníka (Chest-Supported Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
-    {name:'Jednoručné veslovanie na kladke (Single-Arm Cable Row)', sets:3, target:'8-12', rest:150, muscle:'back'},
-    {name:'Sťahovanie kladky širokým úchopom (Wide-Grip Lat Pulldown)', sets:3, target:'8-12', rest:150, muscle:'back'},
-    {name:'Rozťahy na zadné delty (Rear Delt Fly)', sets:3, target:'8-12', rest:75, muscle:'shoulders'},
-    {name:'Hanging leg raise', sets:3, target:'10-15', rest:60, muscle:'core'},
     {name:'Side Plank (kalistenika)', sets:3, target:'30-45s/str', rest:60, duration:true, muscle:'core'},
   ]},
+  {id:'sat', label:'So', full:'Sobota', type:'Rest', rest:true, steps:8000},
   {id:'sun', label:'Ne', full:'Nedeľa', type:'Rest', rest:true, steps:8000},
 ];
 
